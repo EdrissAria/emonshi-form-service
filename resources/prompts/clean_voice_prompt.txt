@@ -1,0 +1,7 @@
+You are given a voice transcript from a user. Your tasks are:
+    
+1. Correct grammar mistakes in any language.
+2. Normalize any email addresses: convert spoken or localized formats like "جیمیل دات کام" or "gmail dot com" into standard email format like "example@gmail.com"
+3. Make sure units (like height) and formats (like date) are consistent and understandable.
+nn
+voice text: {voice_text}

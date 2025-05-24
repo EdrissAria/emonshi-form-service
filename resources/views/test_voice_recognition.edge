@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Voice to Form</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --text: #e6edf3;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --accent: #10b981;
+      --border: #30363d;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 1300px;
+      margin: auto;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    .top-bar a {
+      text-decoration: none;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 6px;
+      background-color: var(--primary-hover);
+      transition: background 0.3s;
+    }
+
+    .top-bar a:hover {
+      background-color: #1158c7;
+    }
+
+    h2 {
+      margin: 0;
+    }
+
+    .main {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .left,
+    .right {
+      flex: 1;
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      min-width: 300px;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 12px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    button:hover {
+      background: var(--primary-hover);
+      transform: scale(1.05);
+      box-shadow: 0 6px 16px rgba(37, 99, 235, 0.5);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    button:active {
+      transform: scale(0.97);
+    }
+
+    audio {
+      width: 100%;
+      margin-top: 1rem;
+      border-radius: 8px;
+    }
+
+    textarea {
+      width: 100%;
+      background: #0d1117;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      font-size: 1rem;
+      font-family: monospace;
+      resize: vertical;
+      min-height: 400px;
+    }
+
+    .form-output {
+      white-space: pre-wrap;
+      background: #0f172a;
+      padding: 1rem;
+      border-radius: 8px;
+      font-family: monospace;
+      overflow-x: auto;
+      max-height: 400px;
+      border: 1px solid var(--border);
+    }
+
+    .audio-wrapper {
+      background: #586374;
+      border: 1px solid var(--border);
+      padding: 1rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      transition: background 0.3s;
+    }
+
+    .audio-wrapper:hover {
+      background: #273549;
+    }
+
+    audio {
+      width: 100%;
+      outline: none;
+      filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(1.2);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="top-bar">
+      <h2>🎙️ Voice to Form</h2>
+      <a href="/test-prompts">📝 Edit Prompts</a>
+    </div>
+
+    <div class="main">
+      <div class="left">
+        <div class="controls">
+          <button id="startBtn">🎤 Start</button>
+          <button id="stopBtn" disabled>⏹ Stop</button>
+          <button id="resetBtn">🔄 Reset</button>
+        </div>
+
+        <audio id="audioPlayer" controls></audio>
+
+        <button id="submitBtn" disabled>📤 Submit Voice</button>
+
+        <div>
+          <h3>🧠 Extracted Form Output</h3>
+          <div class="form-output" id="formOutput">{ Waiting for voice... }</div>
+        </div>
+      </div>
+
+      <div class="right">
+        <h3>📋 Paste Form Format (JSON)</h3>
+        <textarea id="formFormatArea" placeholder="{ elements: [...] }"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let mediaRecorder, audioChunks = [], recordedBlob;
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    const audioPlayer = document.getElementById('audioPlayer');
+    const formOutput = document.getElementById('formOutput');
+    const formFormatArea = document.getElementById('formFormatArea');
+
+    startBtn.onclick = async () => {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+
+      mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+
+      mediaRecorder.onstop = () => {
+        recordedBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+        audioPlayer.src = URL.createObjectURL(recordedBlob);
+        submitBtn.disabled = false;
+      };
+
+      mediaRecorder.start();
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+      submitBtn.disabled = true;
+    };
+
+    stopBtn.onclick = () => {
+      mediaRecorder.stop();
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+    };
+
+    resetBtn.onclick = () => {
+      audioChunks = [];
+      recordedBlob = null;
+      audioPlayer.src = '';
+      formOutput.textContent = '{ Waiting for voice... }';
+      submitBtn.disabled = true;
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+    };
+
+    submitBtn.onclick = async () => {
+      if (!recordedBlob) return;
+
+      const formData = new FormData();
+      formData.append('audio', recordedBlob, 'recording.mp3');
+      formData.append('form', formFormatArea.value);
+
+      formOutput.textContent = 'Processing...';
+
+      const res = await fetch('test-voice', {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await res.json();
+      formOutput.textContent = JSON.stringify(result, null, 2);
+    };
+  </script>
+</body>
+
+</html>
