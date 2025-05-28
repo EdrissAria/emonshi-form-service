@@ -7,7 +7,6 @@ const apiClient = axios.create({
   baseURL: 'https://emonshi.net/site',
   timeout: 5000,
 })
-
 export default class PatientController {
   private async fetchSingleForm(token: string, form_id: number) {
     try {
@@ -61,7 +60,7 @@ export default class PatientController {
     }
   }
 
-  async getPatient({ request, response }: HttpContext) {
+  async patient({ request, response }: HttpContext) {
     const token = request.header('Authorization')
     if (!token) return response.status(401).json({ message: 'Authorization token is missing' })
 
@@ -73,7 +72,7 @@ export default class PatientController {
     }
   }
 
-  async getVisits({ request, response }: HttpContext) {
+  async visits({ request, response }: HttpContext) {
     const token = request.header('Authorization')
     if (!token) return response.status(401).json({ message: 'Authorization token is missing' })
 
@@ -85,7 +84,7 @@ export default class PatientController {
     }
   }
 
-  async getForms({ request, response }: HttpContext) {
+  async forms({ request, response }: HttpContext) {
     const token = request.header('Authorization')
     if (!token) return response.status(401).json({ message: 'Authorization token is missing' })
 
