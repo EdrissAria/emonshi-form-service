@@ -7,11 +7,12 @@ const apiClient = axios.create({
   baseURL: 'https://emonshi.net/site',
   timeout: 5000,
 })
+
 export default class PatientController {
   private async fetchSingleForm(token: string, form_id: number) {
     try {
       const { data } = await apiClient.get(`/forms/${form_id}`, {
-        headers: { Authorization: token },
+        headers: { 'X-Qr-Token': token },
       })
 
       return data.form
@@ -30,9 +31,9 @@ export default class PatientController {
   }
 
   async convertToForm({ request, response }: HttpContext) {
-    const token = request.header('Authorization')
+    const token = request.header('X-Qr-Token')
     if (!token) {
-      return response.status(401).json({ message: 'Authorization token is missing' })
+      return response.status(401).json({ message: 'QR token is missing' })
     }
 
     const { audio, form_id } = await request.validateUsing(UploadAudioValidator)
@@ -46,7 +47,7 @@ export default class PatientController {
   private async fetchFromAPI(endpoint: string, token: string) {
     try {
       const { data } = await apiClient.get(endpoint, {
-        headers: { Authorization: token },
+        headers: { 'X-Qr-Token': token },
       })
       return data
     } catch (error) {
@@ -61,8 +62,8 @@ export default class PatientController {
   }
 
   async patient({ request, response }: HttpContext) {
-    const token = request.header('Authorization')
-    if (!token) return response.status(401).json({ message: 'Authorization token is missing' })
+    const token = request.header('X-Qr-Token')
+    if (!token) return response.status(401).json({ message: 'QR token is missing' })
 
     try {
       const data = await this.fetchFromAPI('/patient', token)
@@ -73,8 +74,8 @@ export default class PatientController {
   }
 
   async visits({ request, response }: HttpContext) {
-    const token = request.header('Authorization')
-    if (!token) return response.status(401).json({ message: 'Authorization token is missing' })
+    const token = request.header('X-Qr-Token')
+    if (!token) return response.status(401).json({ message: 'QR token is missing' })
 
     try {
       const data = await this.fetchFromAPI('/visits', token)
@@ -85,8 +86,8 @@ export default class PatientController {
   }
 
   async forms({ request, response }: HttpContext) {
-    const token = request.header('Authorization')
-    if (!token) return response.status(401).json({ message: 'Authorization token is missing' })
+    const token = request.header('X-Qr-Token')
+    if (!token) return response.status(401).json({ message: 'QR token is missing' })
 
     try {
       const data = await this.fetchFromAPI('/forms', token)
